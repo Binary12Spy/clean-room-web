@@ -1,0 +1,3 @@
+# `cargo xtask ...` runs the build-orchestration binary.
+[alias]
+xtask = "run --package xtask --"

@@ -1,0 +1,7 @@
+# Pins the toolchain for non-Nix users (rustup honors this file).
+# Nix users get the same version pinned in flake.nix; the two are kept in sync.
+[toolchain]
+channel = "1.96.0"
+components = ["rust-src", "rustfmt", "clippy", "rust-analyzer"]
+targets = ["wasm32-unknown-unknown"]
+profile = "default"

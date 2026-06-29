@@ -1,0 +1,5 @@
+# Host imports (push_rect, push_text, ...) are unresolved at bundle link time;
+# they are satisfied by the host at instantiation. rust-lld must be told to
+# allow these undefined symbols rather than erroring out.
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "link-arg=--allow-undefined"]

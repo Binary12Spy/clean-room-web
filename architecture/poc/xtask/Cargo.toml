@@ -1,0 +1,9 @@
+[package]
+name = "xtask"
+version = "0.0.0"
+edition = "2024"
+description = "Build orchestration: builds wasm bundles, then the native host."
+
+[[bin]]
+name = "xtask"
+path = "src/main.rs"

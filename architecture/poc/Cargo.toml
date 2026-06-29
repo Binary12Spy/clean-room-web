@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+members = ["abi", "host", "xtask"]
+exclude = ["bundles"]
+
+# Internal (repo-local) crates live here; members reference them with
+# `abi.workspace = true`. External crates stay inline in each member.
+[workspace.dependencies]
+abi = { path = "abi" }
+
+# WASM bundle crates (bundles/*) are intentionally NOT workspace members.
+# They target wasm32-unknown-unknown and are built by `cargo xtask build`,
+# which invokes cargo with the right target per bundle. Keeping them out of
+# the workspace avoids the host's native `cargo build` trying to compile them
+# for the native target. They depend on the `abi` crate by relative path.

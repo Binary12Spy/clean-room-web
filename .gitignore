@@ -1,0 +1,20 @@
+# Rust
+/target/
+**/target/
+Cargo.lock.orig
+*.rs.bk
+
+# Nix
+result
+result-*
+.direnv/
+
+# Editor / OS
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/
+
+# bundle lockfiles regenerate per build; keep only the workspace lock
+architecture/poc/bundles/*/Cargo.lock

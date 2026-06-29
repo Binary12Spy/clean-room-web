@@ -1,0 +1,9 @@
+[package]
+name = "abi"
+version = "0.0.0"
+edition = "2024"
+description = "Frozen host<->bundle ABI: shared types and encoding conventions"
+
+[lib]
+# Plain rlib. Compiles for both native (host) and wasm32 (bundles).
+crate-type = ["rlib"]
