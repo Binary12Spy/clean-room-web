@@ -21,3 +21,4 @@ architecture/poc/bundles/*/Cargo.lock
 architecture/poc/ui/Cargo.lock
 architecture/poc/layout-*/Cargo.lock
 architecture/poc/app-*/Cargo.lock
+architecture/poc/wcd/Cargo.lock

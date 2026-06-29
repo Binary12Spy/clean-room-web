@@ -39,6 +39,13 @@ pub struct HostState {
     pub draw: Vec<DrawCmd>,
     /// The host-owned font, used by both `measure_text` and rendering.
     pub font: FontBook,
+    /// A navigation target requested by the bundle via the `navigate` import,
+    /// consumed by the host after the triggering event. Used by document mode
+    /// to follow links.
+    pub nav_request: Option<String>,
+    /// The current document text, made available to a document renderer via
+    /// the `doc_len` / `doc_read` imports. Empty for application bundles.
+    pub document: String,
 }
 
 /// Reads a UTF-8 string out of the bundle's linear memory.
@@ -74,6 +81,9 @@ impl Bundle {
     /// * `wasm` - the raw bytes of a WASM bundle.
     /// * `granted_caps` - capability bitmask (see [`abi::caps`]); ungranted
     ///   capabilities have their host imports withheld entirely.
+    /// * `document` - document text exposed via the `doc_*` imports, set before
+    ///   `init` so a document renderer can read it during initialization.
+    ///   Empty for application bundles.
     ///
     /// # Returns
     /// A ready-to-drive [`Bundle`] with `init` already called.
@@ -82,7 +92,7 @@ impl Bundle {
     /// Returns an error if the module is invalid, if the bundle imports a
     /// capability that was not granted (reported as `capability denied: ...`),
     /// if a required export is missing, or if `init` traps.
-    pub fn load(wasm: &[u8], granted_caps: u32) -> Result<Self> {
+    pub fn load(wasm: &[u8], granted_caps: u32, document: String) -> Result<Self> {
         let engine = WasmiEngine::default();
         let module = Module::new(&engine, wasm).context("invalid wasm module")?;
         let font = FontBook::load().map_err(|e| anyhow!("loading embedded font: {e}"))?;
@@ -91,6 +101,8 @@ impl Bundle {
             HostState {
                 draw: Vec::new(),
                 font,
+                nav_request: None,
+                document,
             },
         );
         let mut linker = <Linker<HostState>>::new(&engine);
@@ -139,6 +151,42 @@ impl Bundle {
                     Err(_) => return 0.0,
                 };
                 caller.data_mut().font.measure(&text)
+            },
+        )?;
+
+        // Document-mode imports. These let a renderer read the current document
+        // (pure data; the document executes nothing) and request navigation
+        // when a link is clicked. They are unconditional: reading a document
+        // and following a link are not privileged operations.
+        linker.func_wrap("env", "doc_len", |caller: Caller<HostState>| -> i32 {
+            caller.data().document.len() as i32
+        })?;
+
+        linker.func_wrap(
+            "env",
+            "doc_read",
+            |mut caller: Caller<HostState>, ptr: i32| {
+                // Copy the document bytes out of host state, then write them
+                // into the renderer's linear memory at `ptr`. The renderer is
+                // expected to have reserved `doc_len()` bytes there.
+                let bytes = caller.data().document.clone().into_bytes();
+                let memory = match caller.get_export("memory").and_then(|e| e.into_memory()) {
+                    Some(m) => m,
+                    None => return,
+                };
+                let _ = memory.write(&mut caller, ptr as usize, &bytes);
+            },
+        )?;
+
+        linker.func_wrap(
+            "env",
+            "navigate",
+            |mut caller: Caller<HostState>, ptr: i32, len: i32| {
+                let target = match read_string(&caller, ptr, len) {
+                    Ok(s) => s,
+                    Err(_) => return,
+                };
+                caller.data_mut().nav_request = Some(target);
             },
         )?;
 
@@ -204,6 +252,14 @@ impl Bundle {
     pub fn frame(&mut self) -> (&[DrawCmd], &mut FontBook) {
         let state = self.store.data_mut();
         (&state.draw, &mut state.font)
+    }
+
+    /// Take any navigation target the bundle requested since the last call.
+    ///
+    /// Returns `Some(target)` if a link was followed, clearing it so the same
+    /// request is not processed twice.
+    pub fn take_nav_request(&mut self) -> Option<String> {
+        self.store.data_mut().nav_request.take()
     }
 }
 

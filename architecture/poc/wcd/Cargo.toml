@@ -1,0 +1,11 @@
+[package]
+name = "wcd"
+version = "0.0.0"
+edition = "2024"
+description = "Parser for the .wcd (web clean document) format: a frozen, line-oriented document."
+
+# Standalone (compiled into wasm bundles, not the host workspace).
+[workspace]
+
+[lib]
+crate-type = ["rlib"]

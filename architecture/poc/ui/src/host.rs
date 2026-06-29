@@ -19,6 +19,8 @@ unsafe extern "C" {
     fn push_rect(x: f32, y: f32, w: f32, h: f32, rgba: i32);
     fn push_text(ptr: i32, len: i32, x: f32, y: f32, rgba: i32);
     fn measure_text(ptr: i32, len: i32) -> f32;
+    #[link_name = "navigate"]
+    fn host_navigate(ptr: i32, len: i32);
 }
 
 /// Draw a filled rectangle.
@@ -40,4 +42,14 @@ pub fn text(s: &str, x: f32, y: f32, rgba: i32) {
 pub fn measure(s: &str) -> f32 {
     // Safety: same invariant as `text` - `s` is a valid live string slice.
     unsafe { measure_text(s.as_ptr() as i32, s.len() as i32) }
+}
+
+/// Request that the host load the document (or resource) at `target`.
+///
+/// The host decides whether and how to honor it; the bundle just expresses the
+/// intent (e.g. a clicked link).
+pub fn navigate(target: &str) {
+    // Safety: `target` is a live `&str`; the host copies the bytes out before
+    // returning.
+    unsafe { host_navigate(target.as_ptr() as i32, target.len() as i32) }
 }

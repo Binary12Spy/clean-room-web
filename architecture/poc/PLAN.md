@@ -92,7 +92,7 @@ poc/
 ├── layout-flex/            # layout library #1 (wasm32 cdylib)
 │   └── src/lib.rs          # flexbox-style box model, hit-testing
 │
-├── layout-grid/            # layout library #2 (wasm32 cdylib)  
+├── layout-grid/            # layout library #2 (wasm32 cdylib)
 │   └── src/lib.rs          # constraint/grid-style, different internal model
 │
 ├── app-todo-flex/          # the demo app, bundled with layout-flex (wasm32 cdylib)

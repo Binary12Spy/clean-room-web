@@ -74,9 +74,18 @@ fn print_usage() {
     eprintln!("  --click X,Y     (with --dump-frame) send a click at X,Y before dumping");
 }
 
+/// In document mode, what the host needs to follow links: the renderer wasm and
+/// the directory documents are resolved against.
+struct DocMode {
+    renderer_wasm: Vec<u8>,
+    base_dir: PathBuf,
+}
+
 /// The application: holds the bundle and the lazily-created window/surface.
 struct App {
     bundle: Bundle,
+    /// Present only when running a document; drives link navigation.
+    doc_mode: Option<DocMode>,
     window: Option<Rc<Window>>,
     surface: Option<softbuffer::Surface<Rc<Window>, Rc<Window>>>,
     size: (u32, u32),
@@ -84,13 +93,41 @@ struct App {
 }
 
 impl App {
-    fn new(bundle: Bundle) -> Self {
+    fn new(bundle: Bundle, doc_mode: Option<DocMode>) -> Self {
         Self {
             bundle,
+            doc_mode,
             window: None,
             surface: None,
             size: (DEFAULT_W, DEFAULT_H),
             cursor: (0, 0),
+        }
+    }
+
+    /// Follow a link: load the target document and rebuild the renderer around
+    /// it. Only meaningful in document mode.
+    fn navigate_to(&mut self, target: &str) {
+        let Some(doc_mode) = &self.doc_mode else {
+            return;
+        };
+        let path = doc_mode.base_dir.join(target);
+        let text = match std::fs::read_to_string(&path) {
+            Ok(t) => t,
+            Err(e) => {
+                eprintln!("navigate: cannot read {}: {e}", path.display());
+                return;
+            }
+        };
+        match Bundle::load(&doc_mode.renderer_wasm, 0, text) {
+            Ok(bundle) => self.bundle = bundle,
+            Err(e) => eprintln!("navigate: cannot load renderer: {e:#}"),
+        }
+    }
+
+    /// After dispatching an event, honor any navigation the bundle requested.
+    fn process_nav(&mut self) {
+        if let Some(target) = self.bundle.take_nav_request() {
+            self.navigate_to(&target);
         }
     }
 
@@ -197,6 +234,9 @@ impl ApplicationHandler for App {
                 };
                 let payload = abi::pack_u16_pair(self.cursor.0, self.cursor.1);
                 let _ = self.bundle.on_event(tag, payload);
+                if tag == abi::event::MOUSE_DOWN {
+                    self.process_nav();
+                }
                 if let Some(w) = &self.window {
                     w.request_redraw();
                 }
@@ -207,26 +247,78 @@ impl ApplicationHandler for App {
     }
 }
 
+/// Locate the host's default document renderer wasm.
+///
+/// The renderer is shipped *by the host* as its default handler for documents -
+/// it is not provided by the document. We look for it next to the running host
+/// binary's target directory.
+fn default_doc_renderer_path() -> PathBuf {
+    // target/<profile>/host -> target/wasm32-unknown-unknown/<profile>/doc_renderer.wasm
+    let exe = std::env::current_exe().unwrap_or_default();
+    let profile = exe
+        .parent()
+        .and_then(|p| p.file_name())
+        .map(|s| s.to_owned())
+        .unwrap_or_else(|| "debug".into());
+    let target_root = exe
+        .parent()
+        .and_then(|p| p.parent())
+        .map(|p| p.to_path_buf())
+        .unwrap_or_default();
+    target_root
+        .join("wasm32-unknown-unknown")
+        .join(profile)
+        .join("doc_renderer.wasm")
+}
+
 fn main() -> Result<()> {
     let args = parse_args()?;
-    let wasm = std::fs::read(&args.bundle_path)
-        .with_context(|| format!("reading bundle {}", args.bundle_path.display()))?;
 
-    let granted = if args.grant_net { abi::caps::NET } else { 0 };
-    let mut bundle = Bundle::load(&wasm, granted)?;
+    let is_document = args.bundle_path.extension().is_some_and(|e| e == "wcd");
+
+    // In document mode the host loads its OWN renderer and feeds it the document
+    // as data; in application mode the path IS the wasm bundle.
+    let (bundle, doc_mode) = if is_document {
+        let doc_text = std::fs::read_to_string(&args.bundle_path)
+            .with_context(|| format!("reading document {}", args.bundle_path.display()))?;
+        let renderer_path = default_doc_renderer_path();
+        let renderer_wasm = std::fs::read(&renderer_path)
+            .with_context(|| format!("reading document renderer {}", renderer_path.display()))?;
+        let base_dir = args
+            .bundle_path
+            .parent()
+            .map(|p| p.to_path_buf())
+            .unwrap_or_default();
+        let bundle = Bundle::load(&renderer_wasm, 0, doc_text)?;
+        (
+            bundle,
+            Some(DocMode {
+                renderer_wasm,
+                base_dir,
+            }),
+        )
+    } else {
+        let wasm = std::fs::read(&args.bundle_path)
+            .with_context(|| format!("reading bundle {}", args.bundle_path.display()))?;
+        let granted = if args.grant_net { abi::caps::NET } else { 0 };
+        (Bundle::load(&wasm, granted, String::new())?, None)
+    };
 
     if args.dump_frame {
+        let mut app = App::new(bundle, doc_mode);
         // Populate hit regions with an initial frame, then optionally click.
-        bundle.render().context("initial frame")?;
+        app.bundle.render().context("initial frame")?;
         if let Some((x, y)) = args.click {
             let payload = abi::pack_u16_pair(x as u16, y as u16);
-            bundle.on_event(abi::event::MOUSE_DOWN, payload)?;
+            app.bundle.on_event(abi::event::MOUSE_DOWN, payload)?;
+            // Honor link navigation so the click can be observed headlessly.
+            app.process_nav();
         }
-        return dump_frame(&mut bundle);
+        return dump_frame(&mut app.bundle);
     }
 
     let event_loop = EventLoop::new().context("creating event loop")?;
-    let mut app = App::new(bundle);
+    let mut app = App::new(bundle, doc_mode);
     event_loop.run_app(&mut app).context("event loop")?;
     Ok(())
 }

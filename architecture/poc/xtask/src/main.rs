@@ -14,7 +14,12 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, exit};
 
 /// Bundle crates to compile for wasm32-unknown-unknown. Add new bundles here.
-const BUNDLES: &[&str] = &["hello-rect", "app-todo-flex", "app-todo-grid"];
+const BUNDLES: &[&str] = &[
+    "hello-rect",
+    "app-todo-flex",
+    "app-todo-grid",
+    "doc-renderer",
+];
 
 const WASM_TARGET: &str = "wasm32-unknown-unknown";
 

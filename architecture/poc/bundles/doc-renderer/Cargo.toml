@@ -1,0 +1,23 @@
+[package]
+name = "doc-renderer"
+version = "0.0.0"
+edition = "2024"
+description = "The host's default document renderer: parses and lays out .wcd documents (WASM)."
+
+# Standalone crate, not part of the host workspace (different compile target).
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+abi = { path = "../../abi" }
+ui = { path = "../../ui" }
+wcd = { path = "../../wcd" }
+lol_alloc = "0.4"
+
+[profile.release]
+panic = "abort"
+opt-level = "s"
+lto = true
+strip = true

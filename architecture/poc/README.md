@@ -16,7 +16,7 @@ pitfalls worked through before implementation.
 | **M1** | Capability grant/deny is structural | ✅ mechanism in place |
 | **M2** | Layout (boxes, text, hit-testing) lives in a WASM lib | ✅ done |
 | **M3** | Second layout lib swaps in, host unchanged (keystone) | ✅ done |
-| **M4** | Document mode: static render + links | ⬜ next |
+| **M4** | Document mode: static render + links | ✅ done |
 
 ## Layout
 
@@ -30,10 +30,13 @@ poc/
 ├── layout-grid/     fixed-grid layout library (wasm)
 ├── app-todo-core/   todo app logic, layout-agnostic (wasm)
 ├── app-shell/       bundle glue: allocator, ABI exports, event decode (wasm)
+├── wcd/             parser for the .wcd document format (no_std, shared)
+├── docs/            example .wcd documents (page-one, page-two)
 └── bundles/         WASM cdylib bundles (standalone crates, wasm32-unknown-unknown)
     ├── hello-rect/       M0 test bundle
     ├── app-todo-flex/    todo app + flex layout (one-line choice)
-    └── app-todo-grid/    todo app + grid layout (same app, different layout)
+    ├── app-todo-grid/    todo app + grid layout (same app, different layout)
+    └── doc-renderer/     the host's default .wcd document renderer
 ```
 
 The `app-todo-flex` and `app-todo-grid` bundles differ by exactly one line (the
@@ -68,6 +71,21 @@ Clicking a todo's toggle button checks it off (hit-testing happens in the layout
 library, not the host). For a display-free check of layout output, use
 `--dump-frame` (optionally with `--click X,Y`) to print the draw commands one
 frame produces.
+
+### Document mode (M4)
+
+Point the host at a `.wcd` file instead of a `.wasm`:
+
+```sh
+cargo xtask run -- docs/page-one.wcd
+```
+
+The host recognizes the document extension, loads its own default renderer
+(`doc-renderer.wasm` - itself just a bundle, proving document rendering is also
+a userland concern), and feeds it the document as pure data. The document
+executes nothing; it is human-readable plain text. Clicking the link at the
+bottom navigates to `page-two.wcd`, which links back. This is the static,
+zero-runtime, linkable document half of the architecture.
 
 ### Capabilities (M1)
 

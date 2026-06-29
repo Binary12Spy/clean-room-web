@@ -1,0 +1,16 @@
+# wcd/1
+
+h1 What the Web Could Have Been
+p A proof of concept: documents and applications as separate, honest things.
+
+h2 The Idea
+p This page is a static document. It carries no code.
+p The renderer drawing it is a WASM bundle, the same kind that runs apps.
+p Nothing in this file can execute. It is pure data, inspectable by reading it.
+
+h2 What This Demonstrates
+- Documents render with zero runtime of their own
+- The renderer is userland, not baked into the engine
+- Links move between documents
+
+link Read page two => page-two.wcd

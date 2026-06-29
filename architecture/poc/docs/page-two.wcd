@@ -1,0 +1,14 @@
+# wcd/1
+
+h1 Page Two
+p You followed a link. The host loaded a new document and re-rendered it.
+
+h2 Still Just Data
+p This page, like the first, is plain text with a tiny line-oriented grammar.
+p The same renderer parsed and drew it without any change.
+
+h2 The Two Halves
+- The application half: layout in userland, swappable (the todo demo)
+- The document half: static, linkable, zero-runtime (these pages)
+
+link Back to page one => page-one.wcd
