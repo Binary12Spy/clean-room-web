@@ -102,8 +102,11 @@ fn build_host(release: bool) {
 }
 
 fn run_host(release: bool, rest: &[String]) {
-    // Strip xtask-level flags; pass the remainder to the host binary.
-    let host_args: Vec<&String> = rest.iter().filter(|a| a.as_str() != "--release").collect();
+    // Strip xtask-level flags and the `--` separator; pass the rest to the host.
+    let host_args: Vec<&String> = rest
+        .iter()
+        .filter(|a| a.as_str() != "--release" && a.as_str() != "--")
+        .collect();
     let bin = workspace_root()
         .join("target")
         .join(if release { "release" } else { "debug" })

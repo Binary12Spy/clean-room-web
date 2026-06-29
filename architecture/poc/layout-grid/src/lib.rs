@@ -58,10 +58,11 @@ impl GridLayout {
         Self { hits: Vec::new() }
     }
 
-    /// Walk the tree depth-first, collecting every leaf into a flat cell list.
-    /// Containers contribute only their children; their axis and gap are
-    /// ignored - that is the defining difference from the flex layout.
-    fn flatten<'a>(node: &'a Node, out: &mut Vec<Cell<'a>>) {
+    /// Flatten a node into the leaf cells it contains, depth-first. A leaf
+    /// becomes a single cell; a container contributes its children in order.
+    /// Container axis and gap are ignored - geometry comes from the grid, not
+    /// the content. That is the defining difference from the flex layout.
+    fn leaves<'a>(node: &'a Node, out: &mut Vec<Cell<'a>>) {
         match node {
             Node::Label { text, color } => out.push(Cell::Label {
                 text,
@@ -75,7 +76,7 @@ impl GridLayout {
             }),
             Node::Container { children, .. } => {
                 for child in children {
-                    Self::flatten(child, out);
+                    Self::leaves(child, out);
                 }
             }
         }
@@ -118,18 +119,36 @@ impl Layout for GridLayout {
             Color(0x2b, 0x1c, 0x24, 0xFF).packed(),
         );
 
-        let mut cells = Vec::new();
-        Self::flatten(root, &mut cells);
+        // Each top-level child of the root is one grid row. This keeps columns
+        // aligned: a full-width title row does not push the item rows out of
+        // their columns the way a single flat stream would.
+        let rows: &[Node] = match root {
+            Node::Container { children, .. } => children,
+            single => core::slice::from_ref(single),
+        };
 
         let usable_w = width - MARGIN * 2.0;
         let cell_w = (usable_w - CELL_GAP * (COLUMNS as f32 - 1.0)) / COLUMNS as f32;
+        let mut cy = MARGIN;
 
-        for (i, cell) in cells.iter().enumerate() {
-            let col = i % COLUMNS;
-            let row = i / COLUMNS;
-            let cx = MARGIN + col as f32 * (cell_w + CELL_GAP);
-            let cy = MARGIN + row as f32 * (CELL_H + CELL_GAP);
-            self.draw_cell(cell, cx, cy, cell_w);
+        let mut cells = Vec::new();
+        for row in rows {
+            cells.clear();
+            Self::leaves(row, &mut cells);
+
+            if cells.len() <= 1 {
+                // A lone cell (e.g. the title) spans the full row width.
+                if let Some(cell) = cells.first() {
+                    self.draw_cell(cell, MARGIN, cy, usable_w);
+                }
+            } else {
+                // Distribute this row's cells across the fixed columns.
+                for (col, cell) in cells.iter().enumerate().take(COLUMNS) {
+                    let cx = MARGIN + col as f32 * (cell_w + CELL_GAP);
+                    self.draw_cell(cell, cx, cy, cell_w);
+                }
+            }
+            cy += CELL_H + CELL_GAP;
         }
 
         core::mem::take(&mut self.hits)

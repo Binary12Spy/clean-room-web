@@ -39,6 +39,7 @@ fn parse_args() -> Result<Args> {
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         match arg.as_str() {
+            "--" => {}
             "--cap" | "--cap-net" => grant_net = true,
             "--dump-frame" => dump_frame = true,
             "--click" => {
