@@ -1,0 +1,21 @@
+[package]
+name = "app-todo-grid"
+version = "0.0.0"
+edition = "2024"
+description = "Todo app bundled with the fixed-grid layout library."
+
+# Standalone crate, not part of the host workspace (different compile target).
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+app-shell = { path = "../../app-shell" }
+layout-grid = { path = "../../layout-grid" }
+
+[profile.release]
+panic = "abort"
+opt-level = "s"
+lto = true
+strip = true

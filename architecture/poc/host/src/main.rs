@@ -28,16 +28,24 @@ struct Args {
     bundle_path: PathBuf,
     grant_net: bool,
     dump_frame: bool,
+    click: Option<(f32, f32)>,
 }
 
 fn parse_args() -> Result<Args> {
     let mut bundle_path = None;
     let mut grant_net = false;
     let mut dump_frame = false;
-    for arg in std::env::args().skip(1) {
+    let mut click = None;
+    let mut args = std::env::args().skip(1);
+    while let Some(arg) = args.next() {
         match arg.as_str() {
             "--cap" | "--cap-net" => grant_net = true,
             "--dump-frame" => dump_frame = true,
+            "--click" => {
+                let spec = args.next().context("--click needs an X,Y argument")?;
+                let (xs, ys) = spec.split_once(',').context("--click expects X,Y")?;
+                click = Some((xs.trim().parse()?, ys.trim().parse()?));
+            }
             "-h" | "--help" => {
                 print_usage();
                 std::process::exit(0);
@@ -45,13 +53,14 @@ fn parse_args() -> Result<Args> {
             other if other.starts_with('-') => {
                 anyhow::bail!("unknown flag: {other}");
             }
-            path => bundle_path = Some(PathBuf::from(path)),
+            path => bundle_path = Some(PathBuf::from(path.to_string())),
         }
     }
     Ok(Args {
         bundle_path: bundle_path.context("no bundle path given\n\n(try --help)")?,
         grant_net,
         dump_frame,
+        click,
     })
 }
 
@@ -61,6 +70,7 @@ fn print_usage() {
     eprintln!("  <bundle.wasm>   path to a WASM bundle to load and run");
     eprintln!("  --cap-net       grant the networking capability to the bundle");
     eprintln!("  --dump-frame    render one frame headlessly, print draw commands, exit");
+    eprintln!("  --click X,Y     (with --dump-frame) send a click at X,Y before dumping");
 }
 
 /// The application: holds the bundle and the lazily-created window/surface.
@@ -205,6 +215,12 @@ fn main() -> Result<()> {
     let mut bundle = Bundle::load(&wasm, granted)?;
 
     if args.dump_frame {
+        // Populate hit regions with an initial frame, then optionally click.
+        bundle.render().context("initial frame")?;
+        if let Some((x, y)) = args.click {
+            let payload = abi::pack_u16_pair(x as u16, y as u16);
+            bundle.on_event(abi::event::MOUSE_DOWN, payload)?;
+        }
         return dump_frame(&mut bundle);
     }
 

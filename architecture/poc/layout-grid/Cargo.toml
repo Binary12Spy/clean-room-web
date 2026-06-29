@@ -1,0 +1,14 @@
+[package]
+name = "layout-grid"
+version = "0.0.0"
+edition = "2024"
+description = "A fixed-grid layout library (userland WASM). Places items on uniform cells."
+
+# Standalone (compiled into wasm bundles, not the host workspace).
+[workspace]
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+ui = { path = "../ui" }

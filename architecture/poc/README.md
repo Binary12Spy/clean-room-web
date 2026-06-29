@@ -14,20 +14,31 @@ pitfalls worked through before implementation.
 |-----------|----------------|-------|
 | **M0** | Host loads a WASM bundle; bundle draws via the ABI | ✅ done |
 | **M1** | Capability grant/deny is structural | ✅ mechanism in place |
-| **M2** | Layout (boxes, text, hit-testing) lives in a WASM lib | ⬜ next |
-| **M3** | Second layout lib swaps in, host unchanged (keystone) | ⬜ |
-| **M4** | Document mode: static render + links | ⬜ |
+| **M2** | Layout (boxes, text, hit-testing) lives in a WASM lib | ✅ done |
+| **M3** | Second layout lib swaps in, host unchanged (keystone) | ✅ done |
+| **M4** | Document mode: static render + links | ⬜ next |
 
 ## Layout
 
 ```
 poc/
-├── abi/        shared host<->bundle contract (no_std)
-├── host/       the engine: window, pixel surface, wasmi (native)
-├── xtask/      build orchestration for the two-target workspace
-└── bundles/    WASM bundles (standalone crates, target wasm32-unknown-unknown)
-    └── hello-rect/   M0 test bundle
+├── abi/             shared host<->bundle contract (no_std)
+├── host/            the engine: window, pixel surface, wasmi, font (native)
+├── xtask/           build orchestration for the two-target workspace
+├── ui/              userland UI vocabulary: Node tree, Layout trait, host wrappers
+├── layout-flex/     flexbox-style layout library (wasm)
+├── layout-grid/     fixed-grid layout library (wasm)
+├── app-todo-core/   todo app logic, layout-agnostic (wasm)
+├── app-shell/       bundle glue: allocator, ABI exports, event decode (wasm)
+└── bundles/         WASM cdylib bundles (standalone crates, wasm32-unknown-unknown)
+    ├── hello-rect/       M0 test bundle
+    ├── app-todo-flex/    todo app + flex layout (one-line choice)
+    └── app-todo-grid/    todo app + grid layout (same app, different layout)
 ```
+
+The `app-todo-flex` and `app-todo-grid` bundles differ by exactly one line (the
+layout type they name). Same app, same content tree, same host binary - only the
+layout library changes. That is the M3 keystone.
 
 The `host`, `abi`, and `xtask` crates form one cargo workspace (native target).
 The `bundles/*` crates are **deliberately excluded** from the workspace: they
@@ -44,11 +55,19 @@ nix develop           # from the repo root; drops into the dev shell
 cd architecture/poc
 
 cargo xtask build                 # build all bundles + the host
+
+# M0: a rectangle drawn by the bundle through the ABI
 cargo xtask run -- target/wasm32-unknown-unknown/debug/hello_rect.wasm
+
+# M2/M3: the same todo app under two different layout libraries
+cargo xtask run -- target/wasm32-unknown-unknown/debug/app_todo_flex.wasm
+cargo xtask run -- target/wasm32-unknown-unknown/debug/app_todo_grid.wasm
 ```
 
-A window opens showing a teal panel with an orange rectangle — drawn entirely
-by the bundle calling the host's `push_rect` import.
+Clicking a todo's toggle button checks it off (hit-testing happens in the layout
+library, not the host). For a display-free check of layout output, use
+`--dump-frame` (optionally with `--click X,Y`) to print the draw commands one
+frame produces.
 
 ### Capabilities (M1)
 
