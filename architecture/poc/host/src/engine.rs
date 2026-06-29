@@ -9,6 +9,8 @@
 use anyhow::{Context, Result, anyhow};
 use wasmi::{Caller, Engine as WasmiEngine, Linker, Module, Store, TypedFunc};
 
+use crate::text::FontBook;
+
 /// One accumulated drawing command, produced by the bundle during `render()`.
 #[derive(Clone, Debug)]
 pub enum DrawCmd {
@@ -19,9 +21,6 @@ pub enum DrawCmd {
         h: f32,
         rgba: u32,
     },
-    // Fields are consumed once the font stack lands in M2; until then the
-    // rasterizer ignores Text commands but bundles may already emit them.
-    #[allow(dead_code)]
     Text {
         text: String,
         x: f32,
@@ -31,11 +30,15 @@ pub enum DrawCmd {
 }
 
 /// Host state threaded through every host function via `Caller`.
-#[derive(Default)]
+///
+/// Holds the font so `measure_text` can answer with the same metrics the host
+/// later uses to draw, keeping layout and rendering consistent.
 pub struct HostState {
     /// Draw commands for the current frame. Cleared by the host before each
     /// `render()` call and drained afterward to paint the pixel buffer.
     pub draw: Vec<DrawCmd>,
+    /// The host-owned font, used by both `measure_text` and rendering.
+    pub font: FontBook,
 }
 
 /// Reads a UTF-8 string out of the bundle's linear memory.
@@ -82,7 +85,14 @@ impl Bundle {
     pub fn load(wasm: &[u8], granted_caps: u32) -> Result<Self> {
         let engine = WasmiEngine::default();
         let module = Module::new(&engine, wasm).context("invalid wasm module")?;
-        let mut store = Store::new(&engine, HostState::default());
+        let font = FontBook::load().map_err(|e| anyhow!("loading embedded font: {e}"))?;
+        let mut store = Store::new(
+            &engine,
+            HostState {
+                draw: Vec::new(),
+                font,
+            },
+        );
         let mut linker = <Linker<HostState>>::new(&engine);
 
         // --- Unconditional imports -------------------------------------------------
@@ -121,14 +131,14 @@ impl Bundle {
         linker.func_wrap(
             "env",
             "measure_text",
-            |caller: Caller<HostState>, ptr: i32, len: i32| -> f32 {
-                // M0 placeholder metric; real measurement arrives with the font
-                // stack in M2. Kept here so the import resolves and bundles can
-                // call it now.
-                match read_string(&caller, ptr, len) {
-                    Ok(s) => s.chars().count() as f32 * 8.0,
-                    Err(_) => 0.0,
-                }
+            |mut caller: Caller<HostState>, ptr: i32, len: i32| -> f32 {
+                // Copy-out-then-mutate: read the string before borrowing state
+                // mutably for the font's glyph cache.
+                let text = match read_string(&caller, ptr, len) {
+                    Ok(s) => s,
+                    Err(_) => return 0.0,
+                };
+                caller.data_mut().font.measure(&text)
             },
         )?;
 
@@ -174,19 +184,26 @@ impl Bundle {
             .context("bundle on_event trapped")
     }
 
-    /// Run one frame and return the draw commands the bundle produced.
+    /// Run one frame, accumulating the bundle's draw commands.
     ///
-    /// # Returns
-    /// The draw commands emitted during this frame, in paint order.
+    /// Call [`Bundle::frame`] afterward to read the commands and the font.
     ///
     /// # Errors
     /// Returns an error if the bundle's `render` traps.
-    pub fn render(&mut self) -> Result<&[DrawCmd]> {
+    pub fn render(&mut self) -> Result<()> {
         self.store.data_mut().draw.clear();
         self.f_render
             .call(&mut self.store, ())
-            .context("bundle render trapped")?;
-        Ok(&self.store.data().draw)
+            .context("bundle render trapped")
+    }
+
+    /// The draw commands from the last [`Bundle::render`] plus the host font.
+    ///
+    /// Returned together as a split borrow so the caller can rasterize text
+    /// (which mutates the font's glyph cache) while reading the commands.
+    pub fn frame(&mut self) -> (&[DrawCmd], &mut FontBook) {
+        let state = self.store.data_mut();
+        (&state.draw, &mut state.font)
     }
 }
 

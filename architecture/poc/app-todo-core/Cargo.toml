@@ -1,0 +1,14 @@
+[package]
+name = "app-todo-core"
+version = "0.0.0"
+edition = "2024"
+description = "Todo application logic, independent of any layout library."
+
+# Standalone (compiled into wasm bundles, not the host workspace).
+[workspace]
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+ui = { path = "../ui" }

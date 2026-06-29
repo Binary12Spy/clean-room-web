@@ -18,3 +18,6 @@ result-*
 
 # bundle lockfiles regenerate per build; keep only the workspace lock
 architecture/poc/bundles/*/Cargo.lock
+architecture/poc/ui/Cargo.lock
+architecture/poc/layout-*/Cargo.lock
+architecture/poc/app-*/Cargo.lock

@@ -5,10 +5,13 @@
 //! with simple source-over alpha against whatever is already in the buffer.
 
 use crate::engine::DrawCmd;
+use crate::text::FontBook;
 
 /// Paint all commands, in order, onto the buffer. Later commands draw over
 /// earlier ones, matching the painter's-algorithm model the bundle assumes.
-pub fn paint(buffer: &mut [u32], width: u32, height: u32, cmds: &[DrawCmd]) {
+///
+/// `font` is borrowed mutably because glyph rasterization populates a cache.
+pub fn paint(buffer: &mut [u32], width: u32, height: u32, cmds: &[DrawCmd], font: &mut FontBook) {
     // Clear to black first so a bundle that does not cover the whole window
     // produces a defined result rather than stale pixels.
     for px in buffer.iter_mut() {
@@ -29,9 +32,14 @@ pub fn paint(buffer: &mut [u32], width: u32, height: u32, cmds: &[DrawCmd]) {
             } => {
                 fill_rect(buffer, w, h, x, y, rw, rh, rgba);
             }
-            // Text rendering arrives with the font stack in M2. For M0 it is a
-            // no-op so bundles can already emit text commands harmlessly.
-            DrawCmd::Text { .. } => {}
+            DrawCmd::Text {
+                ref text,
+                x,
+                y,
+                rgba,
+            } => {
+                font.draw(buffer, w, h, text, x, y, rgba);
+            }
         }
     }
 }

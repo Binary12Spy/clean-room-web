@@ -7,6 +7,7 @@
 
 mod engine;
 mod raster;
+mod text;
 
 use std::num::NonZeroU32;
 use std::path::PathBuf;
@@ -26,14 +27,17 @@ const DEFAULT_H: u32 = 720;
 struct Args {
     bundle_path: PathBuf,
     grant_net: bool,
+    dump_frame: bool,
 }
 
 fn parse_args() -> Result<Args> {
     let mut bundle_path = None;
     let mut grant_net = false;
+    let mut dump_frame = false;
     for arg in std::env::args().skip(1) {
         match arg.as_str() {
             "--cap" | "--cap-net" => grant_net = true,
+            "--dump-frame" => dump_frame = true,
             "-h" | "--help" => {
                 print_usage();
                 std::process::exit(0);
@@ -47,14 +51,16 @@ fn parse_args() -> Result<Args> {
     Ok(Args {
         bundle_path: bundle_path.context("no bundle path given\n\n(try --help)")?,
         grant_net,
+        dump_frame,
     })
 }
 
 fn print_usage() {
-    eprintln!("usage: host [--cap-net] <bundle.wasm>");
+    eprintln!("usage: host [--cap-net] [--dump-frame] <bundle.wasm>");
     eprintln!();
     eprintln!("  <bundle.wasm>   path to a WASM bundle to load and run");
     eprintln!("  --cap-net       grant the networking capability to the bundle");
+    eprintln!("  --dump-frame    render one frame headlessly, print draw commands, exit");
 }
 
 /// The application: holds the bundle and the lazily-created window/surface.
@@ -89,13 +95,10 @@ impl App {
             return;
         }
 
-        let cmds = match self.bundle.render() {
-            Ok(cmds) => cmds,
-            Err(e) => {
-                eprintln!("render error: {e:#}");
-                return;
-            }
-        };
+        if let Err(e) = self.bundle.render() {
+            eprintln!("render error: {e:#}");
+            return;
+        }
 
         let mut buffer = match surface.buffer_mut() {
             Ok(b) => b,
@@ -104,7 +107,8 @@ impl App {
                 return;
             }
         };
-        raster::paint(&mut buffer, w, h, cmds);
+        let (cmds, font) = self.bundle.frame();
+        raster::paint(&mut buffer, w, h, cmds, font);
         if let Err(e) = buffer.present() {
             eprintln!("present error: {e}");
         }
@@ -198,10 +202,36 @@ fn main() -> Result<()> {
         .with_context(|| format!("reading bundle {}", args.bundle_path.display()))?;
 
     let granted = if args.grant_net { abi::caps::NET } else { 0 };
-    let bundle = Bundle::load(&wasm, granted)?;
+    let mut bundle = Bundle::load(&wasm, granted)?;
+
+    if args.dump_frame {
+        return dump_frame(&mut bundle);
+    }
 
     let event_loop = EventLoop::new().context("creating event loop")?;
     let mut app = App::new(bundle);
     event_loop.run_app(&mut app).context("event loop")?;
+    Ok(())
+}
+
+/// Render a single frame without a window and print the resulting draw commands.
+///
+/// This is the headless inspection path: it lets the layout output be verified
+/// in CI or by eye without a display server. The host still knows nothing about
+/// what the bundle is; it just prints what was pushed.
+fn dump_frame(bundle: &mut Bundle) -> Result<()> {
+    bundle.render().context("rendering frame")?;
+    let (cmds, _font) = bundle.frame();
+    println!("{} draw command(s):", cmds.len());
+    for cmd in cmds {
+        match cmd {
+            engine::DrawCmd::Rect { x, y, w, h, rgba } => {
+                println!("  rect   x={x:.0} y={y:.0} w={w:.0} h={h:.0} rgba=#{rgba:08x}");
+            }
+            engine::DrawCmd::Text { text, x, y, rgba } => {
+                println!("  text   x={x:.0} y={y:.0} rgba=#{rgba:08x} {text:?}");
+            }
+        }
+    }
     Ok(())
 }

@@ -1,0 +1,17 @@
+[package]
+name = "app-shell"
+version = "0.0.0"
+edition = "2024"
+description = "Bundle glue: ABI exports, allocator, event decoding, and frame state for the todo app."
+
+# Standalone (compiled into wasm bundles, not the host workspace).
+[workspace]
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+abi = { path = "../abi" }
+ui = { path = "../ui" }
+app-todo-core = { path = "../app-todo-core" }
+lol_alloc = "0.4"

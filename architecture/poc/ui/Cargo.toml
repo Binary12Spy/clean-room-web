@@ -1,0 +1,14 @@
+[package]
+name = "ui"
+version = "0.0.0"
+edition = "2024"
+description = "Shared userland UI vocabulary: content-model tree and safe host-import bindings."
+
+# Standalone (compiled into wasm bundles, not the host workspace).
+[workspace]
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+abi = { path = "../abi" }

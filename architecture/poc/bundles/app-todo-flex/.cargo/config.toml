@@ -1,0 +1,3 @@
+# Host imports are resolved at instantiation, not at bundle link time.
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "link-arg=--allow-undefined"]
