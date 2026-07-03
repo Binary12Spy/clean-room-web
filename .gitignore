@@ -10,6 +10,10 @@ result-*
 .direnv/
 .envrc
 
+# Paper publish artifacts (regenerable via architecture/paper/site/package.sh)
+architecture/paper/site/dist/
+architecture/paper/site/*.zip
+
 # Editor / OS
 .DS_Store
 *.swp

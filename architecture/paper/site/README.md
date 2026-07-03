@@ -32,10 +32,33 @@ without a build step.
   fonts (vendored, unminified so it stays inspectable).
 - `assets/paper.css` - small additive styles for code blocks and tables.
 - `assets/et-book/` - the ET Book web fonts (vendored, `.woff`).
-- `what-the-web-could-have-been.html` - the generated, self-contained output.
+- `index.md` - source for the site index / table of contents.
+- `what-the-web-could-have-been.html`, `index.html` - generated, self-contained output.
 
 ## Publishing
 
 Serving `architecture/paper/site/what-the-web-could-have-been.html` is enough -
-it depends on nothing else. For a nicer URL, point GitHub / Codeberg Pages at
-this directory (or copy the one file wherever you like).
+it depends on nothing else.
+
+To publish, `./package.sh` bundles the rendered pages into
+`clean-room-web-site.zip` with a URL-shaped layout:
+
+```
+index.html                             # the site index / table of contents
+what-the-web-could-have-been/index.html
+```
+
+Deploying the zip's contents at the site root serves (currently live via
+Cloudflare):
+
+```
+https://clean-room-web.project802.io/                              # index / TOC
+https://clean-room-web.project802.io/what-the-web-could-have-been  # the paper
+```
+
+The index page is generated from `index.md`; add a paper by writing its
+Markdown, adding a `render` call in `build.sh`, a copy line in `package.sh`, and
+a link in `index.md`.
+
+The zip and its `dist/` staging directory are build artifacts (git-ignored);
+regenerate them any time with `./build.sh && ./package.sh`.
