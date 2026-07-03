@@ -2,7 +2,7 @@
 //!
 //! Proves the host<->bundle ABI boundary end to end: the host instantiates this
 //! module, calls `init`/`render`, and this bundle calls back into the host's
-//! `push_rect` import to draw. No layout library, no app logic — just the wire.
+//! `push_rect` import to draw. No layout library, no app logic - just the wire.
 
 #![no_std]
 

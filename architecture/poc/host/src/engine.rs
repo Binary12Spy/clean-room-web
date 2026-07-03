@@ -107,7 +107,7 @@ impl Bundle {
         );
         let mut linker = <Linker<HostState>>::new(&engine);
 
-        // --- Unconditional imports -------------------------------------------------
+        // # Unconditional imports
         linker.func_wrap(
             "env",
             "push_rect",
@@ -190,7 +190,7 @@ impl Bundle {
             },
         )?;
 
-        // --- Capability-gated imports ----------------------------------------------
+        // # Capability-gated imports
         if granted_caps & abi::caps::NET != 0 {
             linker.func_wrap(
                 "env",
@@ -265,7 +265,7 @@ impl Bundle {
 
 /// Turn a wasmi instantiation error into a capability-aware message. When a
 /// bundle imports something the host did not register, that is most often a
-/// denied capability — say so explicitly.
+/// denied capability - say so explicitly.
 fn describe_link_error(err: wasmi::Error, granted_caps: u32) -> anyhow::Error {
     let msg = err.to_string();
     if msg.contains("net_fetch") && (granted_caps & abi::caps::NET == 0) {

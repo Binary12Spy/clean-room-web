@@ -4,20 +4,20 @@
 //!
 //! This crate is `no_std` so it can be shared by the native host and by the
 //! `wasm32-unknown-unknown` bundles without divergence. It contains only the
-//! shared *conventions* — there is no host logic and no bundle logic here.
+//! shared *conventions* - there is no host logic and no bundle logic here.
 //!
 //! ## The contract, in one place
 //!
 //! Bundle EXPORTS (host calls these by name):
-//! - `init(caps: u32)`            — once, after instantiation
-//! - `on_event(tag: i32, payload: i32)` — input events
-//! - `render()`                   — once per frame; calls the imports below
+//! - `init(caps: u32)`            - once, after instantiation
+//! - `on_event(tag: i32, payload: i32)` - input events
+//! - `render()`                   - once per frame; calls the imports below
 //!
 //! Bundle IMPORTS (module `"env"`; host provides these):
 //! - `push_rect(x, y, w, h: f32, rgba: i32)`
 //! - `push_text(ptr, len: i32, x, y: f32, rgba: i32)`
 //! - `measure_text(ptr, len: i32) -> f32`
-//! - `net_fetch(ptr, len: i32) -> i32`  — only if the net capability was granted
+//! - `net_fetch(ptr, len: i32) -> i32`  - only if the net capability was granted
 //!
 //! Imports must be declared on the bundle side with
 //! `#[link(wasm_import_module = "env")]`, and the bundle must be linked with
@@ -28,7 +28,7 @@
 /// Capability bits passed to the bundle's `init(caps: u32)`.
 ///
 /// A capability that is *not* set means the corresponding host import is not
-/// registered at all — calling it would fail at instantiation, not silently.
+/// registered at all - calling it would fail at instantiation, not silently.
 pub mod caps {
     /// Networking allowed: the host registers `net_fetch`.
     pub const NET: u32 = 1 << 0;

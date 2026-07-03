@@ -1,0 +1,41 @@
+# Git attributes for the repository.
+#
+# Goals:
+#   - Never let Git mangle line endings or attempt to diff/merge binary assets.
+#   - Enforce LF for text files, matching .editorconfig (end_of_line = lf).
+#   - Keep generated/lock files out of language stats and collapsed in diffs.
+
+# Default: treat everything as text and normalize line endings to LF on commit.
+# Explicit rules below override this for known binary and generated files.
+* text=auto eol=lf
+
+# # Source and text formats
+*.rs      text eol=lf diff=rust
+*.toml    text eol=lf
+*.md      text eol=lf
+*.nix     text eol=lf
+*.json    text eol=lf
+*.txt     text eol=lf
+*.wcd     text eol=lf
+
+# # Binary assets
+# Fonts and other binaries must not be diffed, merged, or EOL-normalized. The
+# `binary` macro expands to `-text -diff -merge`; `-text` prevents any EOL
+# conversion, and clearing `eol` avoids a misleading inherited value.
+*.ttf     binary -eol
+*.otf     binary -eol
+*.woff    binary -eol
+*.woff2   binary -eol
+*.wasm    binary -eol
+*.png     binary -eol
+*.jpg     binary -eol
+*.jpeg    binary -eol
+*.gif     binary -eol
+*.webp    binary -eol
+*.ico     binary -eol
+*.pdf     binary -eol
+
+# # Generated and lock files
+# Still tracked, but collapsed in diffs and excluded from language statistics.
+Cargo.lock  text eol=lf linguist-generated
+flake.lock  text eol=lf linguist-generated
