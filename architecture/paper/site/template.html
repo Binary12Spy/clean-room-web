@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="$lang$"$if(dir)$ dir="$dir$"$endif$>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>$title$$if(author)$ — $author$$endif$</title>
+$if(author)$
+  <meta name="author" content="$author$">
+$endif$
+$if(subtitle)$
+  <meta name="description" content="$subtitle$">
+$endif$
+$for(css)$
+  <link rel="stylesheet" href="$css$">
+$endfor$
+$for(header-includes)$
+  $header-includes$
+$endfor$
+</head>
+<body>
+<article>
+  <header class="masthead">
+    <h1>$title$</h1>
+$if(subtitle)$
+    <p class="subtitle">$subtitle$</p>
+$endif$
+$if(author)$
+    <p class="byline">$author$$if(date)$ &middot; $date$$endif$</p>
+$endif$
+  </header>
+
+$body$
+
+  <footer class="colophon">
+    Typeset with <a href="https://edwardtufte.github.io/tufte-css/">Tufte CSS</a>.
+    This page is a single self-contained file: no scripts, no network, no runtime.
+    It renders itself, which is the property the paper argues a document should have.
+  </footer>
+</article>
+</body>
+</html>

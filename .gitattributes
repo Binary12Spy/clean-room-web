@@ -11,6 +11,9 @@
 
 # # Source and text formats
 *.rs      text eol=lf diff=rust
+*.html    text eol=lf
+*.css     text eol=lf
+*.sh      text eol=lf
 *.toml    text eol=lf
 *.md      text eol=lf
 *.nix     text eol=lf
@@ -39,3 +42,6 @@
 # Still tracked, but collapsed in diffs and excluded from language statistics.
 Cargo.lock  text eol=lf linguist-generated
 flake.lock  text eol=lf linguist-generated
+
+# The paper's rendered HTML is produced by architecture/paper/site/build.sh.
+architecture/paper/site/what-the-web-could-have-been.html linguist-generated

@@ -1,0 +1,112 @@
+/* Supplementary styles on top of Tufte CSS for this paper.
+   Kept small and additive; Tufte CSS does the heavy lifting. */
+
+/* Tufte CSS reserves a wide LEFT gutter for margin notes/sidenotes
+   (body { width: 87.5%; padding-left: 12.5%; max-width: 1400px }) and then
+   pins body text to ~55% of that to leave room for the margin. This paper uses
+   no margin notes, so that layout renders lopsided - text against a large left
+   pad with empty space on the right.
+
+   Instead, make the body itself the reading measure and center it on the page.
+   The line length then IS the text measure (no inner left/right imbalance), and
+   the width is chosen for readability rather than filling the viewport: ~48rem
+   keeps lines near the ideal 65-75 characters. Raise --measure to widen. */
+:root {
+    --measure: 48rem;
+}
+body {
+    width: auto;
+    /* The body box is exactly the reading measure plus symmetric side padding,
+       and centered on the page. Because the box is no wider than the measure,
+       content fills it edge to edge - no empty right gutter inside a too-wide
+       body. The generous top space Tufte gives the leading heading then reads
+       as deliberate framing against roomy, balanced sides. */
+    max-width: calc(var(--measure) + 8rem);
+    padding: 0 4rem 4rem;
+    box-sizing: border-box;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Undo Tufte's ~55% cap so block content fills the measure-width body evenly
+   rather than hugging the left with empty space on the right. */
+article p,
+article ol,
+article ul,
+article blockquote,
+article .subtitle,
+article h1, article h2, article h3,
+header.masthead p,
+header.masthead h1 {
+    width: auto;
+    max-width: 100%;
+}
+
+/* Byline under the subtitle in the masthead. */
+p.byline {
+    font-style: italic;
+    color: #444;
+    margin-top: 0;
+}
+
+/* Fenced code: keep it within the text measure with a light left rule,
+   rather than Tufte's full-bleed default. */
+pre {
+    /* border-box so the padding and left border count inside width:100% rather
+       than adding to it, which would push the block past the body's right edge. */
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    padding: 1rem 1.4rem;
+    background: #f5f3ee;
+    border-left: 3px solid #b3aca0;
+    overflow-x: auto;
+    font-size: 0.9rem;
+}
+pre > code {
+    background: transparent;
+    padding: 0;
+    font-size: inherit;
+}
+
+/* Inline code: subtle tint so it reads as code without shouting. */
+code {
+    background: #f0ede6;
+    padding: 0.1em 0.3em;
+    border-radius: 2px;
+}
+
+/* Tables read as data and may carry more columns than the prose measure wants.
+   Allow one to break out a little wider than the text and stay centered, with
+   horizontal scroll as a fallback on narrow screens rather than crushed cells. */
+table {
+    width: max-content;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: auto;
+    border-collapse: collapse;
+    font-size: 1.1rem;
+    display: block;
+    overflow-x: auto;
+}
+th, td {
+    padding: 0.3rem 0.8rem;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+thead th {
+    border-bottom: 2px solid #333;
+}
+
+/* Colophon at the foot of the paper. */
+footer.colophon {
+    margin-top: 4rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ccc;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+@media (max-width: 760px) {
+    body { padding: 2rem 1.25rem 3rem; }
+}

@@ -8,7 +8,7 @@ It is not a product, not a browser you should use, and not an attempt to replace
 
 # Start Here
 
-1. [The paper: What the Web Could Have Been](./architecture/paper/what-the-web-could-have-been.md). The full argument: how the web accreted, the two structural problems underneath it, and the architecture that avoids them.
+1. [The paper: What the Web Could Have Been](./architecture/paper/what-the-web-could-have-been.md). The full argument: how the web accreted, the two structural problems underneath it, and the architecture that avoids them. Also available as a [typeset, self-contained HTML page](./architecture/paper/site/what-the-web-could-have-been.html) that renders with no scripts and no runtime, the same property the paper argues a document should have.
 2. [The proof of concept](./architecture/poc/). The smallest thing that demonstrates the architecture is real.
 3. The follow-up (planned). Recovering user-agency in app mode: semantics that ride the render rather than living in a DOM. Not yet started.
 
