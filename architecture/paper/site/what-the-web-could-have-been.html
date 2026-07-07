@@ -453,20 +453,35 @@ width: 100%;
 max-width: 100%;
 padding: 1rem 1.4rem;
 background: #f5f3ee;
+color: #111;
 border-left: 3px solid #b3aca0;
 overflow-x: auto;
 font-size: 0.9rem;
 }
 pre > code {
 background: transparent;
+color: inherit;
 padding: 0;
 font-size: inherit;
 }
 
 code {
 background: #f0ede6;
+color: #111;
 padding: 0.1em 0.3em;
 border-radius: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+pre {
+background: #1e1e1e;
+color: #e6e6e6;
+border-left-color: #4a4a4a;
+}
+code {
+background: #262626;
+color: #e6e6e6;
+}
 }
 
 table {

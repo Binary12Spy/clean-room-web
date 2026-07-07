@@ -59,12 +59,14 @@ pre {
     max-width: 100%;
     padding: 1rem 1.4rem;
     background: #f5f3ee;
+    color: #111;
     border-left: 3px solid #b3aca0;
     overflow-x: auto;
     font-size: 0.9rem;
 }
 pre > code {
     background: transparent;
+    color: inherit;
     padding: 0;
     font-size: inherit;
 }
@@ -72,8 +74,24 @@ pre > code {
 /* Inline code: subtle tint so it reads as code without shouting. */
 code {
     background: #f0ede6;
+    color: #111;
     padding: 0.1em 0.3em;
     border-radius: 2px;
+}
+
+/* Dark mode: Tufte flips the body to light text on a near-black background, so
+   the light code tints above would leave light text on a light block. Give code
+   a dark surface with light text to match. */
+@media (prefers-color-scheme: dark) {
+    pre {
+        background: #1e1e1e;
+        color: #e6e6e6;
+        border-left-color: #4a4a4a;
+    }
+    code {
+        background: #262626;
+        color: #e6e6e6;
+    }
 }
 
 /* Tables read as data and may carry more columns than the prose measure wants.
