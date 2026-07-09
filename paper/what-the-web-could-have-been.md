@@ -1,8 +1,17 @@
-# What the Web Could Have Been
-*A clean-room redesign of the web stack, and a proof that a simpler one was possible.*
-
-Ethan Smith · June 2026
-
+---
+title: what-the-web-could-have-been
+subtitle: A clean-room redesign of the web stack, and a proof that a simpler one was possible.
+date: 2026-06
+display-date: June 2026
+byline: Ethan Smith
+slug: clean-room-web/what-the-web-could-have-been
+summary: A clean-room redesign of the web stack, and a proof that a simpler one was possible.
+listed: false
+links:
+  - text: Codeberg
+    url: https://codeberg.org/binaryspy/clean-room-web
+  - text: GitHub
+    url: https://github.com/Binary12Spy/clean-room-web
 ---
 
 The web is the most successful cross-platform runtime ever built, while also being so complex that the number of organizations able to implement it has fallen from five to three as it grew.
