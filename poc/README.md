@@ -55,7 +55,7 @@ Everything runs inside the reproducible dev shell defined by the repo-root
 
 ```sh
 nix develop           # from the repo root; drops into the dev shell
-cd architecture/poc
+cd poc
 
 cargo xtask build                 # build all bundles + the host
 

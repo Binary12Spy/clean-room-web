@@ -42,6 +42,3 @@
 # Still tracked, but collapsed in diffs and excluded from language statistics.
 Cargo.lock  text eol=lf linguist-generated
 flake.lock  text eol=lf linguist-generated
-
-# The paper's rendered HTML is produced by architecture/paper/site/build.sh.
-architecture/paper/site/what-the-web-could-have-been.html linguist-generated

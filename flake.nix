@@ -52,7 +52,6 @@
             wasm-tools        # inspect / validate produced .wasm (wasm-tools print, validate)
             binaryen          # wasm-opt, if we want to size-optimize bundles later
             cargo-watch       # convenience for the edit/build loop
-            pandoc            # render the paper (.md) to a self-contained static HTML
           ]) ++ runtimeLibs;
 
           # dlopen'd libraries are not found via rpath; expose them explicitly.
@@ -62,7 +61,7 @@
             echo "clean-room-web dev shell"
             echo "  rustc:   $(rustc --version)"
             echo "  targets: native + wasm32-unknown-unknown"
-            echo "  build:   cd architecture/poc && cargo xtask build"
+            echo "  build:   cd poc && cargo xtask build"
           '';
         };
       });

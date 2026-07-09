@@ -10,10 +10,6 @@ result-*
 .direnv/
 .envrc
 
-# Paper publish artifacts (regenerable via architecture/paper/site/package.sh)
-architecture/paper/site/dist/
-architecture/paper/site/*.zip
-
 # Editor / OS
 .DS_Store
 *.swp
@@ -22,8 +18,8 @@ architecture/paper/site/*.zip
 .vscode/
 
 # bundle lockfiles regenerate per build; keep only the workspace lock
-architecture/poc/bundles/*/Cargo.lock
-architecture/poc/ui/Cargo.lock
-architecture/poc/layout-*/Cargo.lock
-architecture/poc/app-*/Cargo.lock
-architecture/poc/wcd/Cargo.lock
+poc/bundles/*/Cargo.lock
+poc/ui/Cargo.lock
+poc/layout-*/Cargo.lock
+poc/app-*/Cargo.lock
+poc/wcd/Cargo.lock
